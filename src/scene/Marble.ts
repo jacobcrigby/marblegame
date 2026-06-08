@@ -20,6 +20,7 @@ export class Marble {
     const cfg = GameConfig.marble;
     this.mesh = CreateSphere("marble", { diameter: cfg.radius * 2, segments: 32 }, scene);
     this.mesh.material = this.buildMaterial();
+    this.buildCore();
 
     this.aggregate = new PhysicsAggregate(this.mesh, PhysicsShapeType.SPHERE, {
       mass: cfg.mass,
@@ -59,5 +60,18 @@ export class Marble {
     material.subSurface.tintColor = new Color3(cfg.tint.r, cfg.tint.g, cfg.tint.b);
     material.subSurface.tintColorAtDistance = cfg.radius * 2;
     return material;
+  }
+
+  private buildCore(): void {
+    const cfg = GameConfig.marble.core;
+    const core = CreateSphere("marbleCore", { diameter: cfg.radius * 2, segments: 16 }, this.scene);
+    core.parent = this.mesh;
+    core.isPickable = false;
+    const material = new PBRMaterial("marbleCoreMat", this.scene);
+    material.metallic = 0.4;
+    material.roughness = 0.3;
+    material.albedoColor = new Color3(cfg.color.r, cfg.color.g, cfg.color.b);
+    material.emissiveColor = new Color3(cfg.emissive.r, cfg.emissive.g, cfg.emissive.b);
+    core.material = material;
   }
 }

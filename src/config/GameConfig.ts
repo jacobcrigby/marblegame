@@ -1,5 +1,5 @@
 export const GameConfig = {
-  gravityY: -9.81,
+  gravityY: -17,
 
   physics: {
     fixedTimeStepMs: 1000 / 60,
@@ -20,7 +20,7 @@ export const GameConfig = {
     thickness: 0.6,
     wallHeight: 1.6,
     wallThickness: 0.7,
-    friction: 0.4,
+    friction: 0.5,
     restitution: 0.1,
     maxTiltAngle: 0.26,
     maxTiltSpeed: 0.7,
@@ -29,13 +29,18 @@ export const GameConfig = {
   marble: {
     radius: 0.8,
     mass: 1.2,
-    friction: 0.35,
+    friction: 0.45,
     restitution: 0.15,
     spawn: { x: 0, y: 4, z: 0 },
     tint: { r: 0.55, g: 0.58, b: 0.66 },
     alpha: 0.32,
     roughness: 0.04,
     indexOfRefraction: 1.5,
+    core: {
+      radius: 0.34,
+      color: { r: 0.05, g: 0.06, b: 0.09 },
+      emissive: { r: 0.16, g: 0.34, b: 0.5 },
+    },
   },
 
   objects: {
