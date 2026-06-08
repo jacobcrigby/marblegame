@@ -6,6 +6,7 @@ import {
   ReflectionProbe,
   Vector3,
   type AbstractMesh,
+  type BaseTexture,
   type Scene,
 } from "@babylonjs/core";
 import { GameConfig } from "../config/GameConfig";
@@ -19,6 +20,10 @@ export class SceneBuilder {
     this.buildLights();
     this.probe = this.buildEnvironment();
     this.frame();
+  }
+
+  get reflectionTexture(): BaseTexture {
+    return this.probe.cubeTexture;
   }
 
   reflect(meshes: AbstractMesh[]): void {
@@ -57,10 +62,8 @@ export class SceneBuilder {
   }
 
   private buildEnvironment(): ReflectionProbe {
-    this.scene.environmentIntensity = 0.8;
     const probe = new ReflectionProbe("env", 256, this.scene);
     probe.refreshRate = 1;
-    this.scene.environmentTexture = probe.cubeTexture;
     return probe;
   }
 }

@@ -38,6 +38,7 @@ export const GameConfig = {
     indexOfRefraction: 1.5,
     core: {
       radius: 0.34,
+      offset: { x: 0.24, y: 0.16, z: -0.12 },
       color: { r: 0.05, g: 0.06, b: 0.09 },
       emissive: { r: 0.16, g: 0.34, b: 0.5 },
     },

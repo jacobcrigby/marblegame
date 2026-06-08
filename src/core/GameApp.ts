@@ -40,7 +40,7 @@ export class GameApp {
 
     const sceneBuilder = new SceneBuilder(this.scene);
     const table = new Table(this.scene);
-    const marble = new Marble(this.scene);
+    const marble = new Marble(this.scene, sceneBuilder.reflectionTexture);
     sceneBuilder.reflect([...table.meshes]);
 
     const input = new InputManager();

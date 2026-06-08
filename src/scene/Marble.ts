@@ -5,6 +5,7 @@ import {
   PhysicsAggregate,
   PhysicsShapeType,
   Vector3,
+  type BaseTexture,
   type IPhysicsCollisionEvent,
   type Mesh,
   type Observable,
@@ -16,7 +17,10 @@ export class Marble {
   readonly mesh: Mesh;
   private readonly aggregate: PhysicsAggregate;
 
-  constructor(private readonly scene: Scene) {
+  constructor(
+    private readonly scene: Scene,
+    private readonly reflectionTexture: BaseTexture | null = null,
+  ) {
     const cfg = GameConfig.marble;
     this.mesh = CreateSphere("marble", { diameter: cfg.radius * 2, segments: 32 }, scene);
     this.mesh.material = this.buildMaterial();
@@ -59,6 +63,10 @@ export class Marble {
     material.subSurface.indexOfRefraction = cfg.indexOfRefraction;
     material.subSurface.tintColor = new Color3(cfg.tint.r, cfg.tint.g, cfg.tint.b);
     material.subSurface.tintColorAtDistance = cfg.radius * 2;
+    if (this.reflectionTexture) {
+      material.reflectionTexture = this.reflectionTexture;
+      material.subSurface.refractionTexture = this.reflectionTexture;
+    }
     return material;
   }
 
@@ -66,6 +74,7 @@ export class Marble {
     const cfg = GameConfig.marble.core;
     const core = CreateSphere("marbleCore", { diameter: cfg.radius * 2, segments: 16 }, this.scene);
     core.parent = this.mesh;
+    core.position.set(cfg.offset.x, cfg.offset.y, cfg.offset.z);
     core.isPickable = false;
     const material = new PBRMaterial("marbleCoreMat", this.scene);
     material.metallic = 0.4;
