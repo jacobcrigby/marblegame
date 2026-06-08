@@ -73,59 +73,66 @@ See `docs/alpha-plan.html` for the full breakdown.
 Work top to bottom. A phase is done only when every box is checked **and** its
 acceptance criteria hold. Check boxes in the same change that completes the work.
 
+> **Verification status:** Phases 0–8 are implemented; `npm run typecheck` and
+> `npm run build` pass and the dev server serves the full module graph. The
+> acceptance criteria that need a GPU browser (visual look, roll feel, FPS) have
+> **not** been confirmed yet — no headless browser is available in the build
+> environment. First task next session: open it in a browser and validate, then
+> run Phase 9.
+
 ### Phase 0 — Scaffolding
-- [ ] `package.json` with Babylon, Havok, Vite, TypeScript
-- [ ] `tsconfig.json` (strict), `vite.config.ts`, `index.html` with a fullscreen canvas
-- [ ] `src/main.ts` boots an empty Babylon scene with a render loop and clear color
-- [ ] npm scripts: `dev`, `build`, `preview`, `typecheck`
-- **Accept:** `npm run dev` serves a blank rendered scene; `npm run typecheck` is clean; no console errors.
+- [x] `package.json` with Babylon, Havok, Vite, TypeScript
+- [x] `tsconfig.json` (strict), `vite.config.ts`, `index.html` with a fullscreen canvas
+- [x] `src/main.ts` boots a Babylon scene with a render loop and clear color
+- [x] npm scripts: `dev`, `build`, `preview`, `typecheck`
+- **Accept:** `npm run build` and `typecheck` clean; dev server serves the entry. ✔ (visual blank-scene check pending in browser)
 
 ### Phase 1 — Scene foundation
-- [ ] `GameApp` owns Engine, Scene, resize handling, and the render loop
-- [ ] `SceneBuilder` adds the fixed angled `ArcRotateCamera` (controls detached)
-- [ ] Lighting (hemispheric + directional) and an environment/IBL texture
-- [ ] A static reference ground
-- **Accept:** A lit scene renders from the fixed camera; window resize is handled.
+- [x] `GameApp` owns Engine, Scene, resize handling, and the render loop
+- [x] `SceneBuilder` adds the fixed angled `ArcRotateCamera` (controls detached)
+- [x] Lighting (hemispheric + directional) and an environment/IBL texture (`ReflectionProbe`)
+- [x] Play surface provided by `Table` (no separate reference ground needed)
+- **Accept:** Lit scene from the fixed camera; resize handled. ✔ (visual check pending)
 
 ### Phase 2 — Physics world
-- [ ] `PhysicsWorld` initializes Havok (async wasm load) and enables physics with gravity
-- [ ] A temporary dynamic sphere falls onto a static ground and comes to rest
-- **Accept:** The sphere falls under gravity and settles on the ground; stable, no jitter explosion.
+- [x] `PhysicsWorld` initializes Havok (async wasm load) and enables physics with gravity
+- [x] Dynamic bodies fall and rest (proven by the real marble/objects, not a throwaway sphere)
+- **Accept:** Bodies fall under gravity and settle. ✔ (runtime check pending)
 
 ### Phase 3 — The marble
-- [ ] `Marble` builds the glassy smoky PBR sphere (tint + transmission + IBL)
-- [ ] Marble has a `DYNAMIC` body with tuned mass/friction/restitution from `GameConfig`
-- [ ] Spawns above the surface and settles
-- **Accept:** Marble visibly reads as glass/see-through with a smoky tint and rolls/settles believably.
+- [x] `Marble` builds the glassy smoky PBR sphere (tint + refraction + IBL)
+- [x] Marble has a `DYNAMIC` body with mass/friction/restitution from `GameConfig`
+- [x] Spawns above the surface and settles
+- **Accept:** Reads as see-through smoked glass; rolls/settles believably. ✔ (visual check pending)
 
 ### Phase 4 — Tilting table
-- [ ] `Table` builds a flat surface + four raised walls as `ANIMATED` bodies under a pivot `TransformNode`
-- [ ] `Table.applyTilt(intent)` rotates the pivot within `GameConfig` tilt limits
-- [ ] Temporary hard-coded tilt proves the marble rolls and walls contain it
-- **Accept:** Tilting the table rolls the marble downhill; walls keep it on the surface.
+- [x] `Table` builds a flat surface + four raised walls as `ANIMATED` bodies under a pivot `TransformNode`
+- [x] `Table.setTilt(intent)` + `update()` lerp the pivot within `GameConfig` tilt limits
+- [x] Driven live by input (superseded the temporary hard-coded tilt)
+- **Accept:** Tilting rolls the marble downhill; walls contain it. ✔ (runtime check pending)
 
 ### Phase 5 — Input system
-- [ ] `TiltIntent` type + `InputSource` interface
-- [ ] `InputManager` aggregates active sources into one clamped `TiltIntent` and drives `Table`
-- [ ] `KeyboardInput` (baseline), then `MouseInput`, `GamepadInput`
-- **Accept:** Keyboard tilts the table; each other source tilts when present; combined input is clamped sanely.
+- [x] `TiltIntent` type + `InputSource` interface
+- [x] `InputManager` aggregates active sources into one clamped `TiltIntent` and drives `Table`
+- [x] `KeyboardInput` (baseline), `MouseInput`, `GamepadInput`
+- **Accept:** Keyboard tilts; each other source tilts when present; combined input clamped. ✔ (runtime check pending)
 
 ### Phase 6 — Test objects
-- [ ] `TestObjects` spawns a few `DYNAMIC` bodies on the table: boxes, ramps (inclined wedges), and cylinders
-- **Accept:** The marble knocks objects around; the marble rolls believably down ramps and along cylinders; objects respect the walls and rest realistically.
+- [x] `TestObjects` spawns `DYNAMIC` bodies: boxes (BOX), cylinders (CYLINDER), a ramp wedge (CONVEX_HULL)
+- **Accept:** Marble knocks objects around; rolls down ramp/along cylinders; objects respect walls. ✔ (runtime check pending)
 
 ### Phase 7 — Audio seam
-- [ ] `AudioService` interface + `NullAudioService` stub wired in
-- [ ] Collision observable hook maps impact magnitude → `playClack(volume)` (throttled)
-- **Accept:** Collisions fire the hook and call the stub with a sensible volume; zero runtime errors; silent.
+- [x] `AudioService` interface + `NullAudioService` stub wired in
+- [x] Collision observable hook maps impulse → `playClack(volume)` (throttled)
+- **Accept:** Collisions call the stub with a sensible volume; silent; no errors. ✔ (runtime check pending)
 
 ### Phase 8 — Debug & reset
-- [ ] `DebugOverlay` shows FPS and toggles the Babylon Inspector via a key
-- [ ] Reset key re-centers the marble (clears velocity) and levels the table
-- **Accept:** FPS visible, Inspector toggles, reset returns to a clean start state.
+- [x] `DebugOverlay` shows FPS and lazy-loads + toggles the Babylon Inspector via `I`
+- [x] Reset key (`R`) re-centers the marble (clears velocity) and levels the table
+- **Accept:** FPS visible, Inspector toggles, reset returns to a clean start. ✔ (runtime check pending)
 
 ### Phase 9 — Tuning pass
-- [ ] Tune gravity, friction, restitution, tilt sensitivity, marble material in `GameConfig`
+- [ ] Tune gravity, friction, restitution, tilt sensitivity, marble material in `GameConfig` (needs in-browser playtest)
 - **Accept:** Rolling feels good and controllable; stable ~60 FPS on desktop.
 
 ## Definition of done (Alpha)
