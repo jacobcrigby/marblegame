@@ -137,15 +137,27 @@ acceptance criteria hold. Check boxes in the same change that completes the work
 
 ## Definition of done (Alpha)
 
-All phases complete and accepted; `npm run build` and `npm run typecheck` pass;
-no console errors; code adheres to the principles in `AGENTS.md`; `PLAN.md`
-checkboxes reflect reality.
+All phases complete and accepted; `npm run build`, `npm run typecheck`, and
+`npm run check:physics` pass; no console errors; code adheres to the principles in
+`AGENTS.md`; `PLAN.md` checkboxes reflect reality.
+
+`npm run check:physics` runs a headless (NullEngine + Havok) simulation that
+asserts the table tilt holds, the marble rolls when tilted, and obstacles ride the
+board. Run it after any change to the table, marble, or physics setup.
 
 ## Risks & watch-items
 
 - **Havok wasm loading** must be awaited before any physics body is created.
-- **ANIMATED vs DYNAMIC** — tilting a static body won't transfer momentum
-  correctly; the table/walls must be `ANIMATED`.
+- **One ANIMATED compound body, driven by `rotationQuaternion`** — the board
+  (surface + walls + obstacles) is a single `PhysicsBody` (ANIMATED) built from a
+  `PhysicsShapeContainer`, tilted by slerping the root node's `rotationQuaternion`.
+  Do **not** parent separate physics bodies under a pivot and rotate with Euler
+  `rotation`: Havok writes the post-step transform back as a quaternion, which
+  silently overrides Euler updates (tilt appears to reset after a few frames) and
+  parented kinematic bodies don't drive the simulation (marble never rolls).
+- **Obstacles are fixed to the board** — boxes, ramps, and upright cylinders are
+  part of the table compound so they tilt with it. Cylinders stand on a flat face
+  (vertical axis) so they read as obstacles, not rollers.
 - **Non-square colliders** — ramps and cylinders need correct collider shapes
   (convex/wedge mesh and cylinder), not box approximations, or the marble's roll
   feel will be wrong.

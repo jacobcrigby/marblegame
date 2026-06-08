@@ -4,90 +4,97 @@ import {
   CreateCylinder,
   Mesh,
   PBRMaterial,
-  PhysicsAggregate,
-  PhysicsShapeType,
+  PhysicsShapeConvexHull,
+  PhysicsShapeCylinder,
+  Quaternion,
+  PhysicsShapeBox,
   Vector3,
   VertexData,
+  type PhysicsShape,
+  type PhysicsShapeContainer,
   type Scene,
+  type TransformNode,
 } from "@babylonjs/core";
 import { GameConfig } from "../config/GameConfig";
+import { attachPart } from "./compoundPart";
 
-export class TestObjects {
-  private readonly bodies: Mesh[] = [];
+const PART_MATERIAL = {
+  friction: GameConfig.objects.friction,
+  restitution: GameConfig.objects.restitution,
+};
 
-  constructor(private readonly scene: Scene) {
-    this.spawnBox(new Vector3(-4, 1, 3), new Color3(0.8, 0.3, 0.3));
-    this.spawnBox(new Vector3(-2.5, 1, 4.2), new Color3(0.3, 0.7, 0.4));
-    this.spawnCylinder(new Vector3(4, 1, -3), new Color3(0.35, 0.5, 0.85));
-    this.spawnCylinder(new Vector3(2.5, 1, -4.5), new Color3(0.85, 0.7, 0.3));
-    this.spawnRamp(new Vector3(3, 0.4, 3), new Color3(0.6, 0.45, 0.75));
-  }
+export function populateObstacles(
+  scene: Scene,
+  root: TransformNode,
+  container: PhysicsShapeContainer,
+  parts: Mesh[],
+): void {
+  const add = (mesh: Mesh, shape: PhysicsShape): void =>
+    attachPart(root, container, mesh, shape, PART_MATERIAL, parts);
 
-  get meshes(): Mesh[] {
-    return this.bodies;
-  }
+  add(...box(scene, new Vector3(-4, 0.8, 3), new Color3(0.8, 0.3, 0.3)));
+  add(...box(scene, new Vector3(-2, 0.8, -4), new Color3(0.3, 0.7, 0.4)));
+  add(...cylinder(scene, new Vector3(4, 0.8, -3), new Color3(0.35, 0.5, 0.85)));
+  add(...cylinder(scene, new Vector3(2.5, 0.8, 4), new Color3(0.85, 0.7, 0.3)));
+  add(...ramp(scene, new Vector3(3.5, 0, 0.5), new Color3(0.6, 0.45, 0.75)));
+}
 
-  private spawnBox(position: Vector3, color: Color3): void {
-    const mesh = CreateBox("box", { size: 1.4 }, this.scene);
-    mesh.material = this.material("boxMat", color);
-    mesh.position.copyFrom(position);
-    this.addBody(mesh, PhysicsShapeType.BOX);
-  }
+function box(scene: Scene, position: Vector3, color: Color3): [Mesh, PhysicsShape] {
+  const size = 1.6;
+  const mesh = CreateBox("box", { size }, scene);
+  mesh.material = material(scene, "boxMat", color);
+  mesh.position.copyFrom(position);
+  const shape = new PhysicsShapeBox(Vector3.Zero(), Quaternion.Identity(), new Vector3(size, size, size), scene);
+  return [mesh, shape];
+}
 
-  private spawnCylinder(position: Vector3, color: Color3): void {
-    const mesh = CreateCylinder("cylinder", { diameter: 1.3, height: 1.6 }, this.scene);
-    mesh.material = this.material("cylinderMat", color);
-    mesh.position.copyFrom(position);
-    mesh.rotation.z = Math.PI / 2;
-    this.addBody(mesh, PhysicsShapeType.CYLINDER);
-  }
+function cylinder(scene: Scene, position: Vector3, color: Color3): [Mesh, PhysicsShape] {
+  const diameter = 1.6;
+  const height = 1.6;
+  const mesh = CreateCylinder("cylinder", { diameter, height }, scene);
+  mesh.material = material(scene, "cylinderMat", color);
+  mesh.position.copyFrom(position);
+  const half = height / 2;
+  const shape = new PhysicsShapeCylinder(new Vector3(0, -half, 0), new Vector3(0, half, 0), diameter / 2, scene);
+  return [mesh, shape];
+}
 
-  private spawnRamp(position: Vector3, color: Color3): void {
-    const mesh = this.buildWedge(3, 1.6, 3);
-    const material = this.material("rampMat", color);
-    material.backFaceCulling = false;
-    mesh.material = material;
-    mesh.position.copyFrom(position);
-    this.addBody(mesh, PhysicsShapeType.CONVEX_HULL);
-  }
+function ramp(scene: Scene, position: Vector3, color: Color3): [Mesh, PhysicsShape] {
+  const mesh = wedge(scene, 3, 1.6, 3);
+  const mat = material(scene, "rampMat", color);
+  mat.backFaceCulling = false;
+  mesh.material = mat;
+  mesh.position.copyFrom(position);
+  return [mesh, new PhysicsShapeConvexHull(mesh, scene)];
+}
 
-  private buildWedge(width: number, height: number, depth: number): Mesh {
-    const hw = width / 2;
-    const hd = depth / 2;
-    const positions = [
-      -hw, 0, -hd,  hw, 0, -hd,  -hw, height, -hd,
-      -hw, 0,  hd,  hw, 0,  hd,  -hw, height,  hd,
-    ];
-    const indices = [
-      0, 2, 1,
-      3, 4, 5,
-      0, 1, 4, 0, 4, 3,
-      2, 5, 4, 2, 4, 1,
-      0, 3, 5, 0, 5, 2,
-    ];
-    const mesh = new Mesh("ramp", this.scene);
-    const vertexData = new VertexData();
-    vertexData.positions = positions;
-    vertexData.indices = indices;
-    vertexData.applyToMesh(mesh);
-    mesh.createNormals(false);
-    return mesh;
-  }
+function wedge(scene: Scene, width: number, height: number, depth: number): Mesh {
+  const hw = width / 2;
+  const hd = depth / 2;
+  const positions = [
+    -hw, 0, -hd, hw, 0, -hd, -hw, height, -hd,
+    -hw, 0, hd, hw, 0, hd, -hw, height, hd,
+  ];
+  const indices = [
+    0, 2, 1,
+    3, 4, 5,
+    0, 1, 4, 0, 4, 3,
+    2, 5, 4, 2, 4, 1,
+    0, 3, 5, 0, 5, 2,
+  ];
+  const mesh = new Mesh("ramp", scene);
+  const data = new VertexData();
+  data.positions = positions;
+  data.indices = indices;
+  data.applyToMesh(mesh);
+  mesh.createNormals(false);
+  return mesh;
+}
 
-  private material(name: string, color: Color3): PBRMaterial {
-    const material = new PBRMaterial(name, this.scene);
-    material.albedoColor = color;
-    material.metallic = 0.05;
-    material.roughness = 0.5;
-    return material;
-  }
-
-  private addBody(mesh: Mesh, shape: PhysicsShapeType): void {
-    new PhysicsAggregate(mesh, shape, {
-      mass: GameConfig.objects.mass,
-      friction: GameConfig.objects.friction,
-      restitution: GameConfig.objects.restitution,
-    }, this.scene);
-    this.bodies.push(mesh);
-  }
+function material(scene: Scene, name: string, color: Color3): PBRMaterial {
+  const mat = new PBRMaterial(name, scene);
+  mat.albedoColor = color;
+  mat.metallic = 0.05;
+  mat.roughness = 0.5;
+  return mat;
 }

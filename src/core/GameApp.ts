@@ -10,7 +10,6 @@ import { enablePhysics } from "../physics/PhysicsWorld";
 import { SceneBuilder } from "../scene/SceneBuilder";
 import { Table } from "../scene/Table";
 import { Marble } from "../scene/Marble";
-import { TestObjects } from "../scene/TestObjects";
 import { InputManager } from "../input/InputManager";
 import { KeyboardInput } from "../input/KeyboardInput";
 import { MouseInput } from "../input/MouseInput";
@@ -42,8 +41,7 @@ export class GameApp {
     const sceneBuilder = new SceneBuilder(this.scene);
     const table = new Table(this.scene);
     const marble = new Marble(this.scene);
-    const objects = new TestObjects(this.scene);
-    sceneBuilder.reflect([...table.meshes, ...objects.meshes]);
+    sceneBuilder.reflect([...table.meshes]);
 
     const input = new InputManager();
     input.add(new KeyboardInput());

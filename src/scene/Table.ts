@@ -2,34 +2,49 @@ import {
   Color3,
   CreateBox,
   PBRMaterial,
-  PhysicsAggregate,
+  PhysicsBody,
   PhysicsMotionType,
-  PhysicsShapeType,
-  Scalar,
+  PhysicsShapeBox,
+  PhysicsShapeContainer,
+  Quaternion,
   TransformNode,
   Vector3,
   type AbstractMesh,
   type Mesh,
+  type PhysicsShape,
   type Scene,
 } from "@babylonjs/core";
 import { GameConfig } from "../config/GameConfig";
+import { attachPart } from "./compoundPart";
+import { populateObstacles } from "./TestObjects";
 import type { TiltIntent } from "../input/TiltIntent";
 
 export class Table {
-  private readonly pivot: TransformNode;
-  private readonly surfaces: Mesh[] = [];
+  private readonly root: TransformNode;
+  private readonly container: PhysicsShapeContainer;
+  private readonly parts: Mesh[] = [];
+  private readonly material: PBRMaterial;
   private targetTiltX = 0;
   private targetTiltZ = 0;
 
   constructor(private readonly scene: Scene) {
-    this.pivot = new TransformNode("tablePivot", scene);
-    const material = this.buildMaterial();
-    this.buildSurface(material);
-    this.buildWalls(material);
+    this.root = new TransformNode("tableRoot", scene);
+    this.root.rotationQuaternion = Quaternion.Identity();
+    this.container = new PhysicsShapeContainer(scene);
+    this.material = this.buildMaterial();
+
+    this.buildSurface();
+    this.buildWalls();
+    populateObstacles(this.scene, this.root, this.container, this.parts);
+
+    const body = new PhysicsBody(this.root, PhysicsMotionType.ANIMATED, false, this.scene);
+    body.shape = this.container;
+    body.setMassProperties({ mass: 0 });
+    body.disablePreStep = false;
   }
 
   get meshes(): AbstractMesh[] {
-    return this.surfaces;
+    return this.parts;
   }
 
   setTilt(intent: TiltIntent): void {
@@ -44,9 +59,9 @@ export class Table {
   }
 
   update(): void {
-    const lerp = GameConfig.table.tiltLerp;
-    this.pivot.rotation.x = Scalar.Lerp(this.pivot.rotation.x, this.targetTiltX, lerp);
-    this.pivot.rotation.z = Scalar.Lerp(this.pivot.rotation.z, this.targetTiltZ, lerp);
+    const target = Quaternion.RotationYawPitchRoll(0, this.targetTiltX, this.targetTiltZ);
+    const current = this.root.rotationQuaternion!;
+    Quaternion.SlerpToRef(current, target, GameConfig.table.tiltLerp, current);
   }
 
   private buildMaterial(): PBRMaterial {
@@ -57,14 +72,16 @@ export class Table {
     return material;
   }
 
-  private buildSurface(material: PBRMaterial): void {
+  private buildSurface(): void {
     const { size, thickness } = GameConfig.table;
     const surface = CreateBox("tableSurface", { width: size, depth: size, height: thickness }, this.scene);
-    surface.material = material;
-    this.attach(surface, new Vector3(0, -thickness / 2, 0));
+    surface.material = this.material;
+    surface.position.set(0, -thickness / 2, 0);
+    const shape = new PhysicsShapeBox(Vector3.Zero(), Quaternion.Identity(), new Vector3(size, thickness, size), this.scene);
+    this.addPart(surface, shape);
   }
 
-  private buildWalls(material: PBRMaterial): void {
+  private buildWalls(): void {
     const { size, wallHeight, wallThickness } = GameConfig.table;
     const half = size / 2;
     const length = size + wallThickness;
@@ -79,20 +96,15 @@ export class Table {
 
     configs.forEach((cfg, i) => {
       const wall = CreateBox(`wall${i}`, { width: cfg.w, depth: cfg.d, height: wallHeight }, this.scene);
-      wall.material = material;
-      this.attach(wall, cfg.pos);
+      wall.material = this.material;
+      wall.position.copyFrom(cfg.pos);
+      const shape = new PhysicsShapeBox(Vector3.Zero(), Quaternion.Identity(), new Vector3(cfg.w, wallHeight, cfg.d), this.scene);
+      this.addPart(wall, shape);
     });
   }
 
-  private attach(mesh: Mesh, position: Vector3): void {
-    mesh.position.copyFrom(position);
-    mesh.parent = this.pivot;
-    const aggregate = new PhysicsAggregate(mesh, PhysicsShapeType.BOX, {
-      mass: 0,
-      friction: GameConfig.table.friction,
-      restitution: GameConfig.table.restitution,
-    }, this.scene);
-    aggregate.body.setMotionType(PhysicsMotionType.ANIMATED);
-    this.surfaces.push(mesh);
+  private addPart(mesh: Mesh, shape: PhysicsShape): void {
+    const material = { friction: GameConfig.table.friction, restitution: GameConfig.table.restitution };
+    attachPart(this.root, this.container, mesh, shape, material, this.parts);
   }
 }

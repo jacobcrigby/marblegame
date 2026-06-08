@@ -33,6 +33,7 @@ npm run dev        # start Vite dev server with HMR
 npm run build      # type-check + production build
 npm run preview    # serve the production build locally
 npm run typecheck  # tsc --noEmit
+npm run check:physics  # headless NullEngine+Havok physics assertions
 ```
 
 ## Repository layout
@@ -44,6 +45,8 @@ marblegame/
   tsconfig.json
   vite.config.ts
   public/                 # static assets served as-is (Havok wasm, audio, env)
+  scripts/
+    physicsCheck.ts       # headless physics verification (npm run check:physics)
   docs/
     alpha-plan.html       # the detailed Alpha plan (design of record)
   src/
@@ -56,9 +59,10 @@ marblegame/
       PhysicsWorld.ts     # Havok init, gravity, plugin enable
     scene/
       SceneBuilder.ts     # camera + lights + environment/IBL
-      Table.ts            # tiltable surface + walls (ANIMATED bodies, pivot node)
+      Table.ts            # tiltable board: one ANIMATED compound body, slerped tilt
       Marble.ts           # glassy smoky sphere + dynamic body
-      TestObjects.ts      # dynamic collision-test bodies: boxes, ramps, cylinders
+      TestObjects.ts      # fixed obstacles (boxes, ramps, upright cylinders) added to the board compound
+      compoundPart.ts     # shared helper: attach a mesh+shape to the board compound
     input/
       TiltIntent.ts       # normalized tilt value type
       InputSource.ts      # interface every input source implements
