@@ -1,10 +1,10 @@
 import type { InputSource } from "./InputSource";
 import type { TiltIntent } from "./TiltIntent";
 
-const NEG_X = new Set(["ArrowUp", "w", "W"]);
-const POS_X = new Set(["ArrowDown", "s", "S"]);
-const NEG_Z = new Set(["ArrowLeft", "a", "A"]);
-const POS_Z = new Set(["ArrowRight", "d", "D"]);
+const POS_X = new Set(["ArrowUp", "w", "W"]);
+const NEG_X = new Set(["ArrowDown", "s", "S"]);
+const POS_Z = new Set(["ArrowLeft", "a", "A"]);
+const NEG_Z = new Set(["ArrowRight", "d", "D"]);
 
 export class KeyboardInput implements InputSource {
   private readonly pressed = new Set<string>();

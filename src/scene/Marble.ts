@@ -54,9 +54,10 @@ export class Marble {
     material.alpha = cfg.alpha;
     material.albedoColor = new Color3(cfg.tint.r, cfg.tint.g, cfg.tint.b);
     material.subSurface.isRefractionEnabled = true;
-    material.subSurface.refractionIntensity = 0.9;
+    material.subSurface.refractionIntensity = 1;
     material.subSurface.indexOfRefraction = cfg.indexOfRefraction;
     material.subSurface.tintColor = new Color3(cfg.tint.r, cfg.tint.g, cfg.tint.b);
+    material.subSurface.tintColorAtDistance = cfg.radius * 2;
     return material;
   }
 }

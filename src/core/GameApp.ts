@@ -58,11 +58,11 @@ export class GameApp {
       }
     });
 
-    this.scene.onBeforeRenderObservable.add(() => {
+    this.scene.onBeforePhysicsObservable.add(() => {
       table.setTilt(input.poll());
       table.update();
-      debug.update();
     });
+    this.scene.onBeforeRenderObservable.add(() => debug.update());
 
     window.addEventListener("resize", () => this.engine.resize());
     this.engine.runRenderLoop(() => this.scene.render());

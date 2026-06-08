@@ -1,6 +1,12 @@
 export const GameConfig = {
   gravityY: -9.81,
 
+  physics: {
+    fixedTimeStepMs: 1000 / 60,
+    maxLinearVelocity: 14,
+    maxAngularVelocity: 60,
+  },
+
   camera: {
     alpha: -Math.PI / 2,
     beta: Math.PI / 3.4,
@@ -11,23 +17,23 @@ export const GameConfig = {
   table: {
     size: 18,
     thickness: 0.6,
-    wallHeight: 1.2,
-    wallThickness: 0.5,
+    wallHeight: 1.6,
+    wallThickness: 0.7,
     friction: 0.4,
-    restitution: 0.15,
-    maxTiltAngle: 0.32,
-    tiltLerp: 0.12,
+    restitution: 0.1,
+    maxTiltAngle: 0.26,
+    maxTiltSpeed: 0.7,
   },
 
   marble: {
     radius: 0.8,
     mass: 1.2,
     friction: 0.35,
-    restitution: 0.2,
+    restitution: 0.15,
     spawn: { x: 0, y: 4, z: 0 },
-    tint: { r: 0.16, g: 0.17, b: 0.2 },
-    alpha: 0.55,
-    roughness: 0.05,
+    tint: { r: 0.55, g: 0.58, b: 0.66 },
+    alpha: 0.32,
+    roughness: 0.04,
     indexOfRefraction: 1.5,
   },
 

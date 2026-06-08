@@ -4,6 +4,7 @@ import {
   PBRMaterial,
   PhysicsBody,
   PhysicsMotionType,
+  PhysicsPrestepType,
   PhysicsShapeBox,
   PhysicsShapeContainer,
   Quaternion,
@@ -41,6 +42,7 @@ export class Table {
     body.shape = this.container;
     body.setMassProperties({ mass: 0 });
     body.disablePreStep = false;
+    body.setPrestepType(PhysicsPrestepType.ACTION);
   }
 
   get meshes(): AbstractMesh[] {
@@ -61,7 +63,11 @@ export class Table {
   update(): void {
     const target = Quaternion.RotationYawPitchRoll(0, this.targetTiltX, this.targetTiltZ);
     const current = this.root.rotationQuaternion!;
-    Quaternion.SlerpToRef(current, target, GameConfig.table.tiltLerp, current);
+    const angle = 2 * Math.acos(Math.min(1, Math.abs(Quaternion.Dot(current, target))));
+    const maxStep = GameConfig.table.maxTiltSpeed * (GameConfig.physics.fixedTimeStepMs / 1000);
+    const t = angle > maxStep ? maxStep / angle : 1;
+    Quaternion.SlerpToRef(current, target, t, current);
+    this.root.computeWorldMatrix(true);
   }
 
   private buildMaterial(): PBRMaterial {

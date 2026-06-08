@@ -158,6 +158,17 @@ board. Run it after any change to the table, marble, or physics setup.
 - **Obstacles are fixed to the board** — boxes, ramps, and upright cylinders are
   part of the table compound so they tilt with it. Cylinders stand on a flat face
   (vertical axis) so they read as obstacles, not rollers.
+- **FPS-independent physics** — `setSubTimeStep(1000/60)` makes Babylon drain real
+  elapsed time in fixed steps (built-in accumulator), so behavior is the same at
+  30, 60, or 144 fps. Tilt is updated in `onBeforePhysicsObservable` so its feel is
+  fixed-step too.
+- **No tunneling, no launching** — the board body uses `PrestepType.ACTION` (swept
+  contact, so a moving surface pushes the marble instead of teleporting through it),
+  `update()` recomputes the root world matrix so ACTION reads a fresh target, the
+  tilt is capped to a constant angular speed (`maxTiltSpeed`) so fast reversals
+  can't fling the marble, and a world velocity limit caps marble speed. With
+  `TELEPORT` the marble tunnels through the floor; with fraction-lerp tilt it
+  launches on reversal — both are regression-checked by `npm run check:physics`.
 - **Non-square colliders** — ramps and cylinders need correct collider shapes
   (convex/wedge mesh and cylinder), not box approximations, or the marble's roll
   feel will be wrong.
