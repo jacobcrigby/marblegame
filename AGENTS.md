@@ -20,7 +20,7 @@ walls and a few test boxes for collision. See `PLAN.md` for scope and phases.
 - **Rendering:** Babylon.js (`@babylonjs/core`)
 - **Physics:** Havok via `@babylonjs/havok` + Babylon's `HavokPlugin` (Physics v2 API)
 - **Build/dev:** Vite
-- **Runtime target:** Modern evergreen browsers (desktop first; mobile gyro supported)
+- **Runtime target:** Modern evergreen browsers, desktop first (device-tilt/gyro deferred)
 
 ## Commands
 
@@ -58,7 +58,7 @@ marblegame/
       SceneBuilder.ts     # camera + lights + environment/IBL
       Table.ts            # tiltable surface + walls (ANIMATED bodies, pivot node)
       Marble.ts           # glassy smoky sphere + dynamic body
-      TestBoxes.ts        # dynamic collision-test boxes
+      TestObjects.ts      # dynamic collision-test bodies: boxes, ramps, cylinders
     input/
       TiltIntent.ts       # normalized tilt value type
       InputSource.ts      # interface every input source implements
@@ -66,7 +66,6 @@ marblegame/
       KeyboardInput.ts
       MouseInput.ts
       GamepadInput.ts
-      DeviceTiltInput.ts
     audio/
       AudioService.ts     # interface + NullAudioService stub; collision hook
     ui/

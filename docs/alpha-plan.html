@@ -168,8 +168,8 @@
         <ul class="clean">
           <li>Glassy, smoky, see-through marble</li>
           <li>Flat table + raised walls, tilts on two axes</li>
-          <li>Tilt via keyboard, mouse, gamepad, gyro</li>
-          <li>A few dynamic boxes for collision</li>
+          <li>Tilt via keyboard, mouse, gamepad</li>
+          <li>Dynamic test objects: boxes, ramps, cylinders</li>
           <li>Fixed angled overhead camera</li>
           <li>Reset (re-center marble, level table)</li>
           <li>Debug overlay (FPS + Inspector toggle)</li>
@@ -184,6 +184,7 @@
           <li>Real audio assets, music</li>
           <li>Menus, scoring, persistence</li>
           <li>Inside-a-sphere (Perplexus) mode</li>
+          <li>Device tilt / gyro controls (deferred)</li>
           <li>Multiple marbles</li>
         </ul>
       </div>
@@ -203,7 +204,7 @@
       <tr><td>Build</td><td>Vite</td><td>Fast HMR, trivial config, clean ES module output.</td></tr>
       <tr><td>Physics</td><td>Havok via <code>HavokPlugin</code></td><td>Babylon's first-class engine; accurate rolling, well maintained, Physics v2 API.</td></tr>
       <tr><td>World</td><td>Tilting flat table + walls</td><td>Easiest to author, test, and extend into a maze; clearest camera.</td></tr>
-      <tr><td>Controls</td><td>Keyboard / mouse / gamepad / gyro</td><td>One <code>TiltIntent</code> abstraction; keyboard is the always-available baseline.</td></tr>
+      <tr><td>Controls</td><td>Keyboard / mouse / gamepad (gyro deferred)</td><td>One <code>TiltIntent</code> abstraction; keyboard is the always-available baseline.</td></tr>
       <tr><td>Camera</td><td>Fixed angled <code>ArcRotateCamera</code></td><td>Whole surface visible; no follow tuning; controls detached so mouse is free for tilt.</td></tr>
       <tr><td>Marble</td><td>PBR glass + smoky tint + IBL</td><td>Matches the requested glassy, smoky, see-through look.</td></tr>
       <tr><td>Audio</td><td>Interface + <code>NullAudioService</code></td><td>Keep the seam ready without sourcing assets now.</td></tr>
@@ -229,7 +230,7 @@
       SceneBuilder.ts        fixed camera, lights, environment / IBL
       Table.ts               tiltable surface + walls (ANIMATED) under a pivot node
       Marble.ts              glassy smoky sphere + DYNAMIC body
-      TestBoxes.ts           DYNAMIC collision-test boxes
+      TestObjects.ts         DYNAMIC test bodies: boxes, ramps, cylinders
     input/
       TiltIntent.ts          { x, z } normalized to [-1, 1]
       InputSource.ts         interface: read() -> TiltIntent, dispose()
@@ -237,13 +238,12 @@
       KeyboardInput.ts       baseline
       MouseInput.ts          pointer drag
       GamepadInput.ts        analog stick
-      DeviceTiltInput.ts     deviceorientation gyro
     audio/
       AudioService.ts        interface + NullAudioService; collision hook
     ui/
       DebugOverlay.ts        FPS readout + Inspector toggle</code></pre>
     <div class="callout good">
-      <p><b>Rule of Two in practice:</b> the four input sources justify the
+      <p><b>Rule of Two in practice:</b> the three input sources justify the
       <code>InputSource</code> interface immediately — there is more than one real
       implementation on day one. Do <i>not</i> pre-build abstractions that have a
       single implementation (e.g. no "SurfaceProvider" interface for a table that
@@ -256,12 +256,12 @@
     <p>Input is unidirectional. Each source emits a normalized intent; the manager
       sums and clamps them; the table converts intent into a pivot rotation; Havok
       and gravity move the marble.</p>
-    <pre><code>┌──────────────┐  ┌───────────┐  ┌────────────┐  ┌────────────────┐
-│ KeyboardInput│  │ MouseInput│  │GamepadInput│  │ DeviceTiltInput│
-└──────┬───────┘  └─────┬─────┘  └─────┬──────┘  └───────┬────────┘
-       │  TiltIntent     │             │                  │
-       └────────┬────────┴──────┬──────┴──────────────────┘
-                ▼
+    <pre><code>┌──────────────┐     ┌───────────┐     ┌────────────┐
+│ KeyboardInput│     │ MouseInput│     │GamepadInput│
+└──────┬───────┘     └─────┬─────┘     └─────┬──────┘
+       │  TiltIntent       │                 │
+       └─────────┬─────────┴─────────────────┘
+                 ▼
         ┌───────────────┐   sum + clamp to maxTiltAngle
         │  InputManager  │ ───────────────────────────────┐
         └───────────────┘                                 ▼
@@ -290,6 +290,7 @@
       <tr><td><code>SceneBuilder</code></td><td>Camera, lights, environment/IBL</td><td>Know about tilt or physics bodies</td></tr>
       <tr><td><code>Table</code></td><td>Surface + walls, pivot node, <code>applyTilt</code></td><td>Read input devices</td></tr>
       <tr><td><code>Marble</code></td><td>Glass mesh + material + dynamic body, reset</td><td>Apply tilt or own the camera</td></tr>
+      <tr><td><code>TestObjects</code></td><td>Boxes, ramps, cylinders + their colliders</td><td>Assume box colliders for non-square shapes</td></tr>
       <tr><td><code>InputManager</code></td><td>Aggregate sources, clamp, drive table</td><td>Implement device specifics inline</td></tr>
       <tr><td><code>AudioService</code></td><td>Collision → sound contract</td><td>Hard-depend on a concrete clip in Alpha</td></tr>
       <tr><td><code>DebugOverlay</code></td><td>FPS text, Inspector toggle</td><td>Affect gameplay state</td></tr>
@@ -355,13 +356,16 @@ scene.enablePhysics(new Vector3(0, GameConfig.gravityY, 0),
         camera's user-controls to be detached so it owns the pointer.</li>
       <li><b>GamepadInput</b> — left analog stick via the Gamepad API; deadzone from
         config.</li>
-      <li><b>DeviceTiltInput</b> — <code>deviceorientation</code> beta/gamma mapped
-        to tilt. Needs a user gesture + secure context (HTTPS) on iOS; degrades to
-        no-op when unavailable.</li>
     </ul>
     <p><code>InputManager</code> reads all active sources each frame, sums their
       intents, clamps the result, and calls <code>Table.applyTilt</code>. Summing
       keeps multi-device behavior predictable; clamping prevents over-tilt.</p>
+    <div class="callout">
+      <p><b>Deferred:</b> device tilt / gyro (<code>deviceorientation</code>) is out
+      of the Alpha — it adds iOS permission prompts, a user-gesture requirement, and
+      an HTTPS dependency. Because every device is just an <code>InputSource</code>,
+      adding it later is a single new file with no downstream changes.</p>
+    </div>
   </section>
 
   <section id="audio">
@@ -445,15 +449,18 @@ class NullAudioService implements AudioService {
 
     <div class="phase"><h3><span class="num">5</span>Input system</h3>
       <p><code>TiltIntent</code> + <code>InputSource</code> + <code>InputManager</code>;
-        keyboard first, then mouse, gamepad, gyro. Intent drives the table.</p>
+        keyboard first, then mouse, gamepad. Intent drives the table.</p>
       <p class="accept"><b>Accept:</b> keyboard tilts; each other source tilts when
         present; combined input is clamped sanely.</p>
     </div>
 
-    <div class="phase"><h3><span class="num">6</span>Test boxes</h3>
-      <p><code>TestBoxes</code> spawns a few dynamic boxes on the table.</p>
-      <p class="accept"><b>Accept:</b> the marble knocks boxes around; boxes respect
-        walls and rest realistically.</p>
+    <div class="phase"><h3><span class="num">6</span>Test objects</h3>
+      <p><code>TestObjects</code> spawns a few dynamic bodies on the table — boxes,
+        ramps (inclined wedges), and cylinders — each with a correct collider shape
+        to exercise gravity feel and non-square contact.</p>
+      <p class="accept"><b>Accept:</b> the marble knocks objects around, rolls
+        believably down ramps and along cylinders, and everything respects the walls
+        and rests realistically.</p>
     </div>
 
     <div class="phase"><h3><span class="num">7</span>Audio seam</h3>
@@ -484,7 +491,7 @@ class NullAudioService implements AudioService {
       <tr><th>Risk</th><th>Mitigation</th></tr>
       <tr><td>Havok wasm not loaded before bodies are created</td><td>Await <code>HavokPhysics()</code> in bootstrap before any scene content.</td></tr>
       <tr><td>Table as static body doesn't transfer momentum</td><td>Table/walls are <code>ANIMATED</code>, driven by the pivot transform.</td></tr>
-      <tr><td>Gyro blocked on iOS (permission/HTTPS)</td><td>Request on a user gesture; secure context; no-op fallback.</td></tr>
+      <tr><td>Ramps/cylinders using box colliders</td><td>Use a wedge/convex collider for ramps and a cylinder collider for cylinders, or roll feel will be wrong.</td></tr>
       <tr><td>Glass material cost on mobile</td><td>Single marble; revisit a fallback in tuning, not before.</td></tr>
       <tr><td>Mouse-tilt fights the camera</td><td>Detach camera user-controls so the pointer is free for tilt.</td></tr>
       <tr><td>Physics jitter from over-tilt</td><td>Clamp <code>TiltIntent</code> and cap <code>maxTiltAngle</code>.</td></tr>

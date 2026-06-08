@@ -20,9 +20,10 @@ foundations that every later feature builds on.
 
 - Glassy, smoky, see-through marble (PBR glass + smoky tint).
 - A flat table with raised walls that tilts on two axes via player input.
-- Tilt controls: **keyboard (baseline)**, mouse drag, gamepad, device gyro — all
-  behind one input abstraction.
-- A handful of dynamic boxes to test collisions.
+- Tilt controls: **keyboard (baseline)**, mouse drag, gamepad — all behind one
+  input abstraction.
+- A handful of dynamic test objects — boxes, ramps, and cylinders — to test
+  collisions, gravity feel, and non-square contact.
 - Fixed angled overhead camera.
 - Reset (re-center marble, level the table).
 - Debug overlay (FPS + Babylon Inspector toggle).
@@ -35,6 +36,7 @@ foundations that every later feature builds on.
 - Real audio assets, music.
 - Menus, scoring, persistence.
 - Inside-a-sphere (Perplexus) mode.
+- Device tilt / gyro controls (deferred — adds iOS permission + HTTPS work).
 
 ## Locked decisions
 
@@ -45,7 +47,7 @@ foundations that every later feature builds on.
 | Engine      | Babylon.js (`@babylonjs/core`)                                       |
 | Physics     | Havok (`HavokPlugin`, Physics v2 API)                                |
 | World       | Tilting flat table + walls under a pivot `TransformNode`             |
-| Controls    | Keyboard + mouse drag + gamepad + device gyro, via `TiltIntent`      |
+| Controls    | Keyboard + mouse drag + gamepad, via `TiltIntent` (gyro deferred)    |
 | Camera      | Fixed angled `ArcRotateCamera`, user controls detached              |
 | Marble      | PBR glass, smoky tint volume, IBL reflections                       |
 | Audio       | `AudioService` interface + `NullAudioService` stub in Alpha          |
@@ -105,12 +107,12 @@ acceptance criteria hold. Check boxes in the same change that completes the work
 ### Phase 5 — Input system
 - [ ] `TiltIntent` type + `InputSource` interface
 - [ ] `InputManager` aggregates active sources into one clamped `TiltIntent` and drives `Table`
-- [ ] `KeyboardInput` (baseline), then `MouseInput`, `GamepadInput`, `DeviceTiltInput`
+- [ ] `KeyboardInput` (baseline), then `MouseInput`, `GamepadInput`
 - **Accept:** Keyboard tilts the table; each other source tilts when present; combined input is clamped sanely.
 
-### Phase 6 — Test boxes
-- [ ] `TestBoxes` spawns a few `DYNAMIC` boxes on the table
-- **Accept:** The marble knocks boxes around; boxes respect the walls and rest realistically.
+### Phase 6 — Test objects
+- [ ] `TestObjects` spawns a few `DYNAMIC` bodies on the table: boxes, ramps (inclined wedges), and cylinders
+- **Accept:** The marble knocks objects around; the marble rolls believably down ramps and along cylinders; objects respect the walls and rest realistically.
 
 ### Phase 7 — Audio seam
 - [ ] `AudioService` interface + `NullAudioService` stub wired in
@@ -137,8 +139,9 @@ checkboxes reflect reality.
 - **Havok wasm loading** must be awaited before any physics body is created.
 - **ANIMATED vs DYNAMIC** — tilting a static body won't transfer momentum
   correctly; the table/walls must be `ANIMATED`.
-- **Gyro permissions/HTTPS** — `DeviceTiltInput` needs a user gesture + secure
-  context on iOS; degrade gracefully when unavailable.
+- **Non-square colliders** — ramps and cylinders need correct collider shapes
+  (convex/wedge mesh and cylinder), not box approximations, or the marble's roll
+  feel will be wrong.
 - **Glass cost** — PBR transmission/refraction is the heaviest material; keep the
   marble single and watch mobile performance in the tuning pass.
 - **Input fighting** — detach camera user-controls so mouse-drag tilt and the
