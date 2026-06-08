@@ -20,6 +20,7 @@ import { attachPart } from "./compoundPart";
 
 const PART_MATERIAL = {
   friction: GameConfig.objects.friction,
+  staticFriction: GameConfig.objects.staticFriction,
   restitution: GameConfig.objects.restitution,
 };
 
@@ -60,7 +61,8 @@ function cylinder(scene: Scene, position: Vector3, color: Color3): [Mesh, Physic
 }
 
 function ramp(scene: Scene, position: Vector3, color: Color3): [Mesh, PhysicsShape] {
-  const mesh = wedge(scene, 3, 1.6, 3);
+  const { length, height, depth } = GameConfig.objects.ramp;
+  const mesh = wedge(scene, length, height, depth);
   const mat = material(scene, "rampMat", color);
   mat.backFaceCulling = false;
   mesh.material = mat;

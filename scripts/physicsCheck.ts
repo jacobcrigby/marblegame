@@ -63,13 +63,17 @@ async function main(): Promise<void> {
     { x: 1, z: 0 }, { x: -1, z: 0 }, { x: 0, z: 1 }, { x: 0, z: -1 }, { x: 1, z: 1 }, { x: -1, z: -1 },
     { x: 1, z: 0 }, { x: -1, z: 0 }, { x: 0, z: 1 }, { x: 0, z: -1 },
   ];
+  let escape = "none";
   for (const dir of directions) {
     table.setTilt(dir);
     for (let i = 0; i < 30; i++) {
       step(scene, table, 1);
       const p = marble.mesh.position;
       maxY = Math.max(maxY, p.y);
-      if (Math.abs(p.x) > half || Math.abs(p.z) > half || p.y < -2) contained = false;
+      if (contained && (Math.abs(p.x) > half || Math.abs(p.z) > half || p.y < -2)) {
+        contained = false;
+        escape = `${p.x.toFixed(1)},${p.y.toFixed(1)},${p.z.toFixed(1)}`;
+      }
     }
   }
   const stayedLow = maxY < GameConfig.table.wallHeight + GameConfig.marble.radius + 1.5;
@@ -83,6 +87,7 @@ async function main(): Promise<void> {
     obstacleShift: obstacleShift.toFixed(2),
     marbleSettledY: marble.mesh.position.y.toFixed(2),
     stayedContained: contained,
+    escapeAt: escape,
     stayedLow,
     maxY: maxY.toFixed(1),
   };

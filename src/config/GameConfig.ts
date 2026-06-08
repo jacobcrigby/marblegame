@@ -21,6 +21,7 @@ export const GameConfig = {
     wallHeight: 1.6,
     wallThickness: 0.7,
     friction: 0.5,
+    staticFriction: 0.2,
     restitution: 0.1,
     maxTiltAngle: 0.26,
     maxTiltSpeed: 0.7,
@@ -30,7 +31,10 @@ export const GameConfig = {
     radius: 0.8,
     mass: 1.2,
     friction: 0.45,
+    staticFriction: 0.2,
     restitution: 0.15,
+    linearDamping: 0.2,
+    angularDamping: 0,
     spawn: { x: 0, y: 4, z: 0 },
     tint: { r: 0.55, g: 0.58, b: 0.66 },
     alpha: 0.32,
@@ -47,7 +51,9 @@ export const GameConfig = {
   objects: {
     mass: 0.6,
     friction: 0.4,
+    staticFriction: 0.2,
     restitution: 0.25,
+    ramp: { length: 6.5, height: 1.6, depth: 3 },
   },
 
   input: {

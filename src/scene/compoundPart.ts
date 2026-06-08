@@ -2,6 +2,7 @@ import type { Mesh, PhysicsShape, PhysicsShapeContainer, TransformNode } from "@
 
 export interface PartMaterial {
   friction: number;
+  staticFriction: number;
   restitution: number;
 }
 

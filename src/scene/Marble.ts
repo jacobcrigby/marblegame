@@ -28,9 +28,15 @@ export class Marble {
 
     this.aggregate = new PhysicsAggregate(this.mesh, PhysicsShapeType.SPHERE, {
       mass: cfg.mass,
-      friction: cfg.friction,
       restitution: cfg.restitution,
     }, scene);
+    this.aggregate.shape.material = {
+      friction: cfg.friction,
+      staticFriction: cfg.staticFriction,
+      restitution: cfg.restitution,
+    };
+    this.aggregate.body.setLinearDamping(cfg.linearDamping);
+    this.aggregate.body.setAngularDamping(cfg.angularDamping);
     this.aggregate.body.setCollisionCallbackEnabled(true);
 
     this.reset();

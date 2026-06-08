@@ -110,7 +110,7 @@ export class Table {
   }
 
   private addPart(mesh: Mesh, shape: PhysicsShape): void {
-    const material = { friction: GameConfig.table.friction, restitution: GameConfig.table.restitution };
-    attachPart(this.root, this.container, mesh, shape, material, this.parts);
+    const { friction, staticFriction, restitution } = GameConfig.table;
+    attachPart(this.root, this.container, mesh, shape, { friction, staticFriction, restitution }, this.parts);
   }
 }
