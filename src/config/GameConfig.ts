@@ -10,7 +10,8 @@ export const GameConfig = {
   camera: {
     alpha: -Math.PI / 2,
     beta: Math.PI / 3.4,
-    radius: 26,
+    fov: 0.7,
+    frameExtent: 10.5,
     target: { x: 0, y: 0, z: 0 },
   },
 

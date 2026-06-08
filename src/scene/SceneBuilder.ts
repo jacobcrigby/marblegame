@@ -11,29 +11,39 @@ import {
 import { GameConfig } from "../config/GameConfig";
 
 export class SceneBuilder {
+  private readonly camera: ArcRotateCamera;
   private readonly probe: ReflectionProbe;
 
   constructor(private readonly scene: Scene) {
-    this.buildCamera();
+    this.camera = this.buildCamera();
     this.buildLights();
     this.probe = this.buildEnvironment();
+    this.frame();
   }
 
   reflect(meshes: AbstractMesh[]): void {
     for (const mesh of meshes) this.probe.renderList?.push(mesh);
   }
 
-  private buildCamera(): void {
+  frame(): void {
+    const engine = this.scene.getEngine();
+    const aspect = engine.getRenderWidth() / engine.getRenderHeight();
+    const halfFov = Math.tan(GameConfig.camera.fov / 2);
+    this.camera.radius = GameConfig.camera.frameExtent / (halfFov * Math.min(1, aspect));
+  }
+
+  private buildCamera(): ArcRotateCamera {
     const c = GameConfig.camera;
     const camera = new ArcRotateCamera(
       "camera",
       c.alpha,
       c.beta,
-      c.radius,
+      c.frameExtent,
       new Vector3(c.target.x, c.target.y, c.target.z),
       this.scene,
     );
-    camera.fov = 0.7;
+    camera.fov = c.fov;
+    return camera;
   }
 
   private buildLights(): void {

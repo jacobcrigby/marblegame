@@ -64,7 +64,10 @@ export class GameApp {
     });
     this.scene.onBeforeRenderObservable.add(() => debug.update());
 
-    window.addEventListener("resize", () => this.engine.resize());
+    window.addEventListener("resize", () => {
+      this.engine.resize();
+      sceneBuilder.frame();
+    });
     this.engine.runRenderLoop(() => this.scene.render());
   }
 
